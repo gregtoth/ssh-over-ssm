@@ -14,12 +14,14 @@ main () {
     ssh_pubkey="$(cat ${SSH_DIR}/ssm-ssh-tmp.pub)"
   fi
 
+  local key_id=$(uuidgen)
+
   ssm_cmd=$(cat <<EOF
     "u=\$(getent passwd ${2}) && x=\$(echo \$u |cut -d: -f6) || exit 1
     [ ! -d \${x}/.ssh ] && install -d -m700 -o${2} \${x}/.ssh
     grep '${ssh_pubkey}' \${x}/${ssh_authkeys} && exit 0
-    printf '${ssh_pubkey}\n'|tee -a \${x}/${ssh_authkeys} || exit 1
-    (sleep 15 && sed -i s,'${ssh_pubkey}',, \${x}/${ssh_authkeys} &) >/dev/null 2>&1"
+    printf '${ssh_pubkey} ${key_id}\n'|tee -a \${x}/${ssh_authkeys} || exit 1
+    (sleep 15 && sed -i /${key_id}/d \${x}/${ssh_authkeys} &) >/dev/null 2>&1"
 EOF
   )
 
